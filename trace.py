@@ -71,7 +71,7 @@ def tracePS(function, xmin, xmax, nstep, output):
 	# Function build_repere
 	output.write("/grid {\n")
 	output.write("    /Arial findfont\n")
-	output.write("    .5 cm scalefont\n")
+	output.write("    .35 cm scalefont\n")
 	output.write("    setfont\n")
 	output.write("    newpath\n")
 	output.write("    [3 3] 0 setdash\n")
@@ -115,14 +115,12 @@ def tracePS(function, xmin, xmax, nstep, output):
 	output.write("    stroke\n")
 
 	output.write("    [ ] 0 setdash\n")
-	# output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	# output.write("    %f cm %f cm lineto\n" % (xOrigin, yOrigin + grid_ySize *grid_yStep ))
-	# output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	# output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin ))
 	output.write("    stroke\n")
 	output.write("} def\n")
 	# End function build_repere
 	output.write("grid\n")
+	output.write("%f cm %f cm moveto\n" % (xOrigin, yOrigin - 5))
+	output.write("(%s) show\n" % (functionText))
 
 	output.write("newpath\n")
 	output.write("0.8 setlinewidth\n")
@@ -146,13 +144,14 @@ def tracePS(function, xmin, xmax, nstep, output):
 
 
 def usage(aFileOut):
-	aFileOut.write("usage: trace.py \"<function-name>\"\n")
+	aFileOut.write("usage: trace.py [options] \"<function-name>\"\n")
+	aFileOut.write("\nAvailable options : \n")
 	aFileOut.write("\t-h, --help :  print help\n")
 	aFileOut.write("\t-o, --output :  in outputfile\n")
 	aFileOut.write("\t--xmin  :  set the minimum value of x\n")
 	aFileOut.write("\t--xmax  :  set the maximum value of x\n")
 	aFileOut.write("\t--nstep :  set how many steps\n")
-	aFileOut.write("\n\nThis programm ... help you.\n")
+	aFileOut.write("\n\nThis sentence ... help you.\n")
 
 
 def main(argv=None):
@@ -212,8 +211,10 @@ def main(argv=None):
 
 	function = argv[0]
 
-
-	tracePS(function, xmin, xmax, nstep, output)
+	if(output != sys.stdout):
+		tracePS(function, xmin, xmax, nstep, output)
+	else:
+		trace(function, xmin, xmax, nstep, output)
 
 
 if __name__ == "__main__":
