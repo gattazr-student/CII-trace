@@ -22,27 +22,29 @@ def trace(function, xmin, xmax, nstep, output):
 def tracePS(function, xmin, xmax, nstep, output):
 	function = eval("lambda x:" + function)
 
+
 	step = 1.*(xmax-xmin)/nstep
 	ymin = None
 	ymax = None
-	y = {}
+	# Calcul du max et du min en Y
+	y = []
 	for i in range(nstep+1):
 		x = xmin + i*step
 		try:
-			y[x] = function(x)
-			# output.write("y[%f]=%f\n" % (x, y[x])) # TEMP
-			if ymax is None or y[x] > ymax :
-				ymax = y[x]
-			if ymin is None or y[x] < ymin :
-				ymin = y[x]
+			y += function(x)
+			if ymax is None or y[i] > ymax :
+				ymax = y[i]
+			if ymin is None or y[i] < ymin :
+				ymin = y[i]
 		except:
 			continue
-			# output.write("%s, %s\n" % (x, y)) # TEMP
 
-	# output.write("ymin : %s, ymax : %s\n" % (ymin, ymax)) # TEMP
+	ratioY = 20 / (ymax - ymax + 1);
+	ratioX = 20 / (xmax - xmin + 1);
 
 	xStep = 2
 	yStep = 2
+
 	grid_xStep = 10
 	grid_yStep = 10
 	xOrigin = (21.0 - (grid_xStep * xStep)) / 2.0
@@ -78,8 +80,12 @@ def tracePS(function, xmin, xmax, nstep, output):
 
 	output.write("newpath\n")
 	output.write("%f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	for key, value in y.iteritems():
-		output.write("%f cm %f cm lineto\n" % (xOrigin + key*10 , yOrigin + value*10 ))
+	i = 0
+	for value in y:
+		# output.write("%f, %f -> " % (key, value));
+		x = xmin + i*step
+		output.write("%f cm %f cm lineto\n" % (xOrigin + x*ratioX , yOrigin + value*ratioY ))
+		i += 1
 
 
 	# Function end°file
