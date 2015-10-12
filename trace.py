@@ -6,6 +6,7 @@ from math import *
 
 
 def trace(function, xmin, xmax, nstep, output):
+	functionText = function
 	output.write("x, %s\n" % function)
 	function = eval("lambda x:" + function)
 
@@ -15,11 +16,14 @@ def trace(function, xmin, xmax, nstep, output):
 		try:
 			y = function(x)
 		except:
-			continue
+			sys.stderr.write("Cannot compute %s with x = %.2f\n" % (functionText, x))
+			sys.exit(-1)
+
 		output.write("%s, %s\n" % (x, y))
 
 
 def tracePS(function, xmin, xmax, nstep, output):
+	functionText = function
 	function = eval("lambda x:" + function)
 
 	stepX = 1.*(xmax-xmin)/nstep # Calcul de la largeur d'un pas (en X)
@@ -41,7 +45,8 @@ def tracePS(function, xmin, xmax, nstep, output):
 			if ymin is None or y[i] < ymin :
 				ymin = y[i]
 		except:
-			continue
+			sys.stderr.write("Cannot compute %s with x = %.2f\n" % (functionText, x))
+			sys.exit(-1)
 
 	grid_xSize = 1.5 # Taille en cm d'un carreau de la grille en X
 	grid_ySize = 1.5 # Taille en cm d'un carreau de la grille en Y
