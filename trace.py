@@ -22,16 +22,19 @@ def trace(function, xmin, xmax, nstep, output):
 def tracePS(function, xmin, xmax, nstep, output):
 	function = eval("lambda x:" + function)
 
+	step = 1.*(xmax-xmin)/(nstep-1) # Calcul de la largeur d'un pas (en X)
+	ymin = None # Valeur minimum en y
+	ymax = None # Valeur maximum en y
 
-	step = 1.*(xmax-xmin)/nstep
-	ymin = None
-	ymax = None
-	# Calcul du max et du min en Y
-	y = []
-	for i in range(nstep+1):
-		x = xmin + i*step
+	# Récupération des valeurs de la fonction
+	# Récupération du max et du min en Y
+	y = [] # Liste des valeurs de la fonction
+	for i in range(nstep):
+		x = xmin + i * step
+
 		try:
-			y += function(x)
+			# output.write("x=%f | y=%f\n" % (x,function(x)))
+			y.append(function(x))
 			if ymax is None or y[i] > ymax :
 				ymax = y[i]
 			if ymin is None or y[i] < ymin :
@@ -39,20 +42,24 @@ def tracePS(function, xmin, xmax, nstep, output):
 		except:
 			continue
 
-	ratioY = 20 / (ymax - ymax + 1);
-	ratioX = 20 / (xmax - xmin + 1);
+	grid_xSize = 2 # Taille en cm d'un carreau de la grille en X
+	grid_ySize = 2 # Taille en cm d'un carreau de la grille en Y
 
-	xStep = 2
-	yStep = 2
+	grid_xStep = 10 # Nombre de carreau dans la grille sur X
+	grid_yStep = 10 # Nombre de carreau dans la grille sur Y
 
-	grid_xStep = 10
-	grid_yStep = 10
-	xOrigin = (21.0 - (grid_xStep * xStep)) / 2.0
-	yOrigin = (29.7 - (grid_yStep * yStep)) / 2.0
+	ratioY = (grid_ySize * grid_yStep) / (ymax - ymin); # Calcul du ratio en X
+	ratioX = (grid_xSize * grid_xStep) / (xmax - xmin); # Calcul du ratio en Y
+
+	# Calcul de la position de l'origine (sur une feuille au format A4)
+	xOrigin = (21.0 - (grid_xStep * grid_xSize)) / 2.0
+	yOrigin = (29.7 - (grid_yStep * grid_ySize)) / 2.0
+
 	# Function prep_file
 	output.write("%!\n")
 	output.write("/cm { 28.3464567 mul } def\n")
 	# end function prep_file
+
 	# Function build_repere
 	output.write("/grid {\n")
 	output.write("    /Arial findfont\n")
@@ -60,18 +67,18 @@ def tracePS(function, xmin, xmax, nstep, output):
 	output.write("    setfont\n")
 	output.write("    newpath\n")
 	output.write("    [3 3] 0 setdash\n")
-	for wI in range(1,grid_xStep+1):
-		output.write("    %f cm %f cm moveto\n" % (xOrigin + xStep * wI, yOrigin))
-		output.write("    %f cm %f cm lineto\n" % (xOrigin + xStep * wI, yOrigin + yStep * grid_yStep))
-		output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin + yStep * wI))
-		output.write("    %f cm %f cm lineto\n" % (xOrigin + xStep * grid_xStep, yOrigin + yStep * wI))
+	for wI in range(1, grid_xStep+1):
+		output.write("    %f cm %f cm moveto\n" % (xOrigin + grid_xSize * wI, yOrigin))
+		output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * wI, yOrigin + grid_ySize * grid_yStep))
+		output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin + grid_ySize * wI))
+		output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin + grid_ySize * wI))
 	output.write("    stroke\n")
 
 	output.write("    [ ] 0 setdash\n")
 	output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	output.write("    %f cm %f cm lineto\n" % (xOrigin, yOrigin + yStep *grid_yStep ))
+	output.write("    %f cm %f cm lineto\n" % (xOrigin, yOrigin + grid_ySize *grid_yStep ))
 	output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	output.write("    %f cm %f cm lineto\n" % (xOrigin + xStep * grid_xStep, yOrigin ))
+	output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin ))
 	output.write("    stroke\n")
 
 	output.write("} def\n")
@@ -79,14 +86,16 @@ def tracePS(function, xmin, xmax, nstep, output):
 	output.write("grid\n")
 
 	output.write("newpath\n")
+
+	# Calcul de la position du premier point
+	yOrigin = yOrigin - ymin * ratioY
 	output.write("%f cm %f cm moveto\n" % (xOrigin, yOrigin))
 	i = 0
 	for value in y:
 		# output.write("%f, %f -> " % (key, value));
-		x = xmin + i*step
+		x = i*step
 		output.write("%f cm %f cm lineto\n" % (xOrigin + x*ratioX , yOrigin + value*ratioY ))
 		i += 1
-
 
 	# Function end°file
 	output.write("stroke\n")
