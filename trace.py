@@ -22,7 +22,8 @@ def trace(function, xmin, xmax, nstep, output):
 def tracePS(function, xmin, xmax, nstep, output):
 	function = eval("lambda x:" + function)
 
-	step = 1.*(xmax-xmin)/(nstep-1) # Calcul de la largeur d'un pas (en X)
+	stepX = 1.*(xmax-xmin)/nstep # Calcul de la largeur d'un pas (en X)
+	nstep = nstep + 1 # On calcule un point de plus pour bien prendre la valeur xmax.
 	ymin = None # Valeur minimum en y
 	ymax = None # Valeur maximum en y
 
@@ -30,7 +31,7 @@ def tracePS(function, xmin, xmax, nstep, output):
 	# Récupération du max et du min en Y
 	y = [] # Liste des valeurs de la fonction
 	for i in range(nstep):
-		x = xmin + i * step
+		x = xmin + i * stepX
 
 		try:
 			# output.write("x=%f | y=%f\n" % (x,function(x)))
@@ -42,14 +43,16 @@ def tracePS(function, xmin, xmax, nstep, output):
 		except:
 			continue
 
-	grid_xSize = 2 # Taille en cm d'un carreau de la grille en X
-	grid_ySize = 2 # Taille en cm d'un carreau de la grille en Y
+	grid_xSize = 1.5 # Taille en cm d'un carreau de la grille en X
+	grid_ySize = 1.5 # Taille en cm d'un carreau de la grille en Y
 
 	grid_xStep = 10 # Nombre de carreau dans la grille sur X
 	grid_yStep = 10 # Nombre de carreau dans la grille sur Y
 
 	ratioY = (grid_ySize * grid_yStep) / (ymax - ymin); # Calcul du ratio en X
 	ratioX = (grid_xSize * grid_xStep) / (xmax - xmin); # Calcul du ratio en Y
+
+	stepY = 1.*(ymax-ymin)/grid_yStep # Calcul de la largeur d'un pas (en Y)
 
 	# Calcul de la position de l'origine (sur une feuille au format A4)
 	xOrigin = (21.0 - (grid_xStep * grid_xSize)) / 2.0
@@ -67,37 +70,69 @@ def tracePS(function, xmin, xmax, nstep, output):
 	output.write("    setfont\n")
 	output.write("    newpath\n")
 	output.write("    [3 3] 0 setdash\n")
-	for wI in range(1, grid_xStep+1):
+	output.write("    0.5 setlinewidth\n")
+	reset = False
+	for wI in range(0, grid_xStep+1):
+
+		xValue = xmin+wI*stepX*(nstep/grid_xStep)
+		if xValue == 0.:
+			output.write("    stroke\n")
+			output.write("    [ ] 0 setdash\n")
+			output.write("    1 setlinewidth\n")
+			reset = True
+		# Graduation sur l'axe X
+		output.write("    %f cm %f cm moveto\n" % (xOrigin + grid_xSize * wI - 0.5, yOrigin - 1))
+		output.write("    (%.1f) show\n" % (xValue))
 		output.write("    %f cm %f cm moveto\n" % (xOrigin + grid_xSize * wI, yOrigin))
 		output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * wI, yOrigin + grid_ySize * grid_yStep))
+		if reset:
+			reset = False
+			output.write("    stroke\n")
+			output.write("    0.5 setlinewidth\n")
+			output.write("    [3 3] 0 setdash\n")
+
+		yValue = ymin+wI*stepY
+		if yValue == 0.:
+			output.write("    stroke\n")
+			output.write("    1 setlinewidth\n")
+			output.write("    [ ] 0 setdash\n")
+			reset = True
+		# Graduation sur l'axe Y
+		output.write("    %f cm %f cm moveto\n" % (xOrigin - 2 , yOrigin + grid_ySize * wI))
+		output.write("    (%.1f) show\n" % (yValue))
 		output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin + grid_ySize * wI))
 		output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin + grid_ySize * wI))
+		if reset:
+			reset = False
+			output.write("    stroke\n")
+			output.write("    0.5 setlinewidth\n")
+			output.write("    [3 3] 0 setdash\n")
 	output.write("    stroke\n")
 
 	output.write("    [ ] 0 setdash\n")
-	output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	output.write("    %f cm %f cm lineto\n" % (xOrigin, yOrigin + grid_ySize *grid_yStep ))
-	output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
-	output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin ))
+	# output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
+	# output.write("    %f cm %f cm lineto\n" % (xOrigin, yOrigin + grid_ySize *grid_yStep ))
+	# output.write("    %f cm %f cm moveto\n" % (xOrigin, yOrigin))
+	# output.write("    %f cm %f cm lineto\n" % (xOrigin + grid_xSize * grid_xStep, yOrigin ))
 	output.write("    stroke\n")
-
 	output.write("} def\n")
 	# End function build_repere
 	output.write("grid\n")
 
 	output.write("newpath\n")
+	output.write("0.8 setlinewidth\n")
 
-	# Calcul de la position du premier point
+	# Déplace le point origine en Y (en cas de valeur de y négative)
 	yOrigin = yOrigin - ymin * ratioY
-	output.write("%f cm %f cm moveto\n" % (xOrigin, yOrigin))
+	output.write("%f cm %f cm moveto\n" % (xOrigin, yOrigin + y[0]*ratioY))
 	i = 0
 	for value in y:
 		# output.write("%f, %f -> " % (key, value));
-		x = i*step
+		x = i*stepX
 		output.write("%f cm %f cm lineto\n" % (xOrigin + x*ratioX , yOrigin + value*ratioY ))
 		i += 1
 
-	# Function end°file
+	# Function end_file
 	output.write("stroke\n")
 	output.write("showpage\n")
 	# end function end_file
